@@ -26,6 +26,13 @@ module MusicalGoggles
       receive_hanshake
     end
 
+    def close
+      frame = WebSocket::Frame::Outgoing::Client.new(version: version, type: :close)
+      wait_for_write
+      socket.print frame.to_s
+      socket.close
+    end
+
     def receive_hanshake
       response = ''
       line = nil
