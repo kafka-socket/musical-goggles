@@ -12,8 +12,10 @@ module MusicalGoggles
       @consumer_topic = consumer_topic
       @producer_topic = producer_topic
       @message_queue = Queue.new
-      consumer = kafka.consumer(group_id: 'musical-goggles')
-      start(consumer)
+    end
+
+    def start_consumer
+      kafka.consumer(group_id: 'musical-goggles').tap(&method(:start))
     end
 
     def send(user, message)
@@ -32,7 +34,12 @@ module MusicalGoggles
         consumer.each_message do |message|
           message_queue << message
         end
-      end
+      end.join(3)
+      clear
+    end
+
+    def clear
+      message_queue.clear
     end
   end
 end
