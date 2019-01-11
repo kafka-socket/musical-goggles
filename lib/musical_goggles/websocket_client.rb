@@ -43,7 +43,12 @@ module MusicalGoggles
       frame = WebSocket::Frame::Incoming::Client.new(version: version)
       wait_for_read(timeout)
       frame << socket.read_nonblock(4096)
-      frame.next.to_s
+      result = frame.next
+      if result.type == :text
+        result.to_s
+      else
+        receive(timeout)
+      end
     end
 
     def send(data)
