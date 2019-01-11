@@ -1,13 +1,13 @@
 # frozen_string_literal: true
 
+require 'jwt'
 require 'musical_goggles'
 
 RSpec.describe 'Websocket to kafka bidirectional bridge' do
-  let(:token) { <<~TOKEN.delete("\n") }
-    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwidXNl
-    cl91aWQiOiJKb2huIERvZSIsImlhdCI6MTUxNjIzOTAyMn0.UhOiwlNwWRy9I_uTVQ4dy
-    USt8MHtT9uJiMJiJjVH87M
-  TOKEN
+  let(:user_uid) { 'musical_goggles' }
+  let(:jwt_secret) { 'your-256-bit-secret' }
+  let(:payload) { { user_uid: user_uid } }
+  let(:token) { JWT.encode(payload, jwt_secret, 'HS256') }
   let(:url) { "ws://localhost:3030/ws?token=#{token}" }
   let(:ws) { MusicalGoggles::WebsocketClient.new(url) }
 
@@ -21,12 +21,12 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
 
   context 'websocket to kafka full cycle' do
     before { kafka.start_consumer }
-    before { ws.connect }
 
     let(:message) { 'wazzup' }
     let(:push_message) { 'watching a game, having a bud' }
 
     it 'sends message via websockets and gets it back via kafka and vice versa' do
+      ws.connect
       init_message = kafka.receive
       expect(init_message.value).to be_empty
       expect(init_message.headers['type']).to eq('init')
@@ -36,7 +36,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
       expect(text_message.value).to eq(message)
       expect(text_message.headers['type']).to eq('text')
 
-      kafka.send('John Doe', push_message)
+      kafka.send(user_uid, push_message)
       return_message = ws.receive
       expect(return_message).to eq(push_message)
 
