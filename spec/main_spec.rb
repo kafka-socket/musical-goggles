@@ -7,7 +7,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
   let(:user_uid) { 'musical_goggles' }
   let(:jwt_secret) { 'your-256-bit-secret' }
   let(:payload) { { user_uid: user_uid } }
-  let(:token) { JWT.encode(payload, jwt_secret, 'HS256') }
+  let(:token) { JWT.encode(payload, jwt_secret, 'HS256', { typ: 'JWT' }) }
   let(:url) { "ws://localhost:3030/ws?token=#{token}" }
   let(:ws) { MusicalGoggles::WebsocketClient.new(url) }
 
@@ -29,7 +29,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
       ws.connect
       init_message = kafka.receive
       expect(init_message.key).to eq(user_uid)
-      expect(init_message.value).to be_empty
+      expect(init_message.value.to_s).to be_empty
       expect(init_message.headers['type']).to eq('init')
 
       ws.send(message)
@@ -45,7 +45,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
       ws.close
       close_message = kafka.receive
       expect(close_message.key).to eq(user_uid)
-      expect(close_message.value).to be_empty
+      expect(close_message.value.to_s).to be_empty
       expect(close_message.headers['type']).to eq('terminate')
     end
   end
