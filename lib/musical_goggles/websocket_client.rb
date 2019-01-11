@@ -56,6 +56,8 @@ module MusicalGoggles
       else
         receive(timeout)
       end
+    rescue IO::WaitReadable
+      retry
     end
 
     def send(data)
