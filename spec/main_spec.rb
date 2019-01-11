@@ -28,11 +28,13 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
     it 'sends message via websockets and gets it back via kafka and vice versa' do
       ws.connect
       init_message = kafka.receive
+      expect(init_message.key).to eq(user_uid)
       expect(init_message.value).to be_empty
       expect(init_message.headers['type']).to eq('init')
 
       ws.send(message)
       text_message = kafka.receive
+      expect(text_message.key).to eq(user_uid)
       expect(text_message.value).to eq(message)
       expect(text_message.headers['type']).to eq('text')
 
@@ -42,6 +44,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
 
       ws.close
       close_message = kafka.receive
+      expect(close_message.key).to eq(user_uid)
       expect(close_message.value).to be_empty
       expect(close_message.headers['type']).to eq('terminate')
     end
