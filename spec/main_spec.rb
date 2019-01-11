@@ -26,7 +26,7 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
     let(:message) { 'wazzup' }
     let(:push_message) { 'watching a game, having a bud' }
 
-    it 'sends message via websockets and get it back via kafka and vice versa' do
+    it 'sends message via websockets and gets it back via kafka and vice versa' do
       init_message = kafka.receive
       expect(init_message.value).to be_empty
       expect(init_message.headers['type']).to eq('init')
