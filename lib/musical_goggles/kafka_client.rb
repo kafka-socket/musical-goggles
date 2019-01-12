@@ -5,12 +5,13 @@ require 'kafka'
 module MusicalGoggles
   class KafkaClient
 
-    attr_reader :kafka, :consumer_topic, :producer_topic, :message_queue
+    attr_reader :kafka, :consumer_topic, :producer_topic, :message_queue, :logger
 
-    def initialize(bootstrap_servers:, consumer_topic:, producer_topic:)
+    def initialize(bootstrap_servers:, consumer_topic:, producer_topic:, logger:)
       @kafka = Kafka.new(bootstrap_servers, client_id: 'musical-goggles')
       @consumer_topic = consumer_topic
       @producer_topic = producer_topic
+      @logger = logger
       @message_queue = Queue.new
     end
 
@@ -32,6 +33,7 @@ module MusicalGoggles
       consumer.subscribe(consumer_topic, start_from_beginning: false)
       Thread.new do
         consumer.each_message do |message|
+          logger.debug(message.headers)
           message_queue << message
         end
       end.join(3)
@@ -39,6 +41,7 @@ module MusicalGoggles
     end
 
     def clear
+      logger.debug("Clearing queue...")
       message_queue.clear
     end
   end

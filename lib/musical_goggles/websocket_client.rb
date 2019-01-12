@@ -9,11 +9,12 @@ module MusicalGoggles
     UnfinisheHandshake = Class.new(StandardError)
     InvalidHandshake = Class.new(StandardError)
 
-    attr_reader :uri, :handshake, :version
+    attr_reader :uri, :handshake, :version, :logger
 
-    def initialize(url)
+    def initialize(url:, logger:)
       @handshake = WebSocket::Handshake::Client.new(url: url)
       @version = handshake.version
+      @logger = logger
       @uri = URI(url)
     end
 
@@ -27,9 +28,7 @@ module MusicalGoggles
     end
 
     def close
-      frame = WebSocket::Frame::Outgoing::Client.new(version: version, type: :close)
-      wait_for_write
-      socket.print frame.to_s
+      send("Bye", type: :close)
       socket.close
     end
 
@@ -52,19 +51,21 @@ module MusicalGoggles
       frame << socket.read_nonblock(4096)
       result = frame.next
       if result.type == :text
+        logger.debug "text frame received: [#{result}]"
         result.to_s
       else
+        logger.debug "non-text ws frame received: [#{result.type}]"
         receive(timeout)
       end
     rescue IO::WaitReadable
       retry
     end
 
-    def send(data)
+    def send(data, type: :text)
       frame = WebSocket::Frame::Outgoing::Client.new(
         version: version,
         data: data,
-        type: :text
+        type: type
       )
       wait_for_write
       socket.print frame.to_s
