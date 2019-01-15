@@ -7,12 +7,17 @@ run:
 docker:
 	KAFKA_ADVERTISED_HOST_NAME=`ipconfig getifaddr en0` docker-compose up -d
 
-kafka:
-	kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-topic
+listen:
+	kafka-console-consumer.sh \
+		--bootstrap-server localhost:9092 \
+		--from-beginning \
+		--topic ws-to-kafka \
+		--property "print.timestamp=true" \
+		--property "print.key=true"
 
-kafkap:
+send:
 	kafka-console-producer.sh \
 		--broker-list localhost:9092 \
-		--topic their-topic \
+		--topic kafka-to-ws \
 		--property "parse.key=true" \
 		--property "key.separator=:"

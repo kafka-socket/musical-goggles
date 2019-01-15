@@ -17,8 +17,8 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
   let(:kafka) do
     MusicalGoggles::KafkaClient.new(
       bootstrap_servers: ['localhost:9092'],
-      consumer_topic: 'my-topic',
-      producer_topic: 'their-topic',
+      consumer_topic: 'ws-to-kafka',
+      producer_topic: 'kafka-to-ws',
       logger: logger
     )
   end
