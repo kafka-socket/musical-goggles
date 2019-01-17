@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'jwt'
+require 'json'
 require 'logger'
 require 'musical_goggles'
 
@@ -25,9 +26,11 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
 
   context 'websocket to kafka full cycle' do
     before { kafka.start_consumer }
+    after { kafka.stop_consumer }
 
     let(:message) { 'wazzup' }
     let(:push_message) { 'watching a game, having a bud' }
+    let(:message_id) { 123 }
 
     it 'sends message via websockets and gets it back via kafka and vice versa' do
       ws.connect
@@ -59,6 +62,20 @@ RSpec.describe 'Websocket to kafka bidirectional bridge' do
       expect(close_message.key).to eq(user_uid)
       expect(close_message.value.to_s).to be_empty
       expect(close_message.headers['type']).to eq('terminate')
+    end
+
+    it 'sends a json message and receive acknowledge' do
+      ws.connect
+      _ = kafka.receive
+
+      ws.send(JSON.generate({id: message_id}))
+      ack = JSON.parse(ws.receive, symbolize_names: true)
+      expect(ack[:reply_to]).to eq(message_id)
+      expect(ack[:sent]).to eq(true)
+      _ = kafka.receive
+
+      ws.close
+      _ = kafka.receive
     end
   end
 end

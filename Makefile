@@ -1,4 +1,4 @@
-.PHONY: run docker kafka kafkap
+.PHONY: run docker listen send
 .DEFAULT_GOAL := run
 
 run:
